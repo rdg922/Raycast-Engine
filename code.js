@@ -34,10 +34,13 @@ window.preload = function () {
 // -----
 
 //objects are always assigned variables so you can access it later on
-var player = new Player(200,200, 10, 10); // create new player object. normally the constructor is capitalized (I told you the wrong thing)
+var player = new Player(200,200, 2, 2); // create new player object. normally the constructor is capitalized (I told you the wrong thing)
 var gui = new Gui(0, 0, windowWidth, 100); // create Gui Bar at the very top with the origin on the box at the top left
-var test = new Boundary(200,200,300,200, [random(1,360),150,80]); //creates a single line of a preset color
 
+var test = new Walls();
+for(var i = 0; i < 5; i++){
+  test.walls.push(new Boundary( random(1,windowWidth), random(1,windowHeight), random(1,windowWidth), random(1,windowHeight), [random(1,360),150,80])); //creates a single line of a preset color
+}
 var ray = new Ray(500,500,0,1);
 
 var boundaries = [test] //array of all boundaries
@@ -50,14 +53,13 @@ World.frameRate = 60;
 function draw(){
   background(0);
 
+  player.checkCollision(test.walls);
   player.update() //handles keyboard input and whatnot
-  //player.checkCollision(boundaries);
+  player.collisionRay.castAll(test.get());
+  var output = player.drawRays(45, windowWidth, test.get())
+  drawRays(output, 0,0,windowWidth,windowHeight);
 
-  ray.pos.x = player.pos.x;
-  ray.pos.y = player.pos.y;
-  ray.setRotation(player.getRotation());
-  ray.cast(boundaries[0]);
-
+  
 
   //gui always happens at the end
   gui.updateValue("x", player.pos.x);
@@ -66,12 +68,36 @@ function draw(){
   gui.updateValue("Framerate", frameRate());
 
   //draw orders
-  ray.show();
-  for(b of boundaries)b.show() //draws a single line for each boundary
-  player.show() // draws before the gui and after the lines (to show the direction on top of the boundaries)
+  //test.show() //draws a single line for each boundary
+  //player.show() // draws before the gui and after the lines (to show the direction on top of the boundaries)
   gui.show(); //draws Gui on top
   
 
+}
+
+function drawRays(output, startx, starty, endx, endy){
+  //console.log(output)
+  var con = []
+  noStroke();
+  for(var i = 0; i < output.length; i++){
+    //console.log(i);
+    if (!output[i].exists) continue;
+
+    var height = windowHeight;
+    var width = (endx - startx)/output.length;
+
+    var inDist = 10000/output[i].dist;
+    var top = height/2 + starty + inDist;
+    var left = (width*i);
+    var right = (width*(i+1))+1;
+    var bottom = height/2 + starty - inDist; 
+
+    fill(inDist)
+    con.push(left, right, top, bottom);
+    shape(left, top, right, top, right, bottom, left, bottom);
+   }
+   //console.log((endx - startx)/output.length);
+   //console.log(con);
 }
 
 // -----

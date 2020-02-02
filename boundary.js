@@ -17,3 +17,21 @@ class Boundary{
     }
 
 }
+
+class Walls{
+    
+    constructor(){
+        this.walls = [];
+    }
+
+    get(){
+        return this.walls;
+    }
+
+    show(){
+        for(var wall of this.walls){
+            wall.show();
+        }
+    }
+
+}

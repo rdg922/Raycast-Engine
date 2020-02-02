@@ -1,16 +1,13 @@
 class Player {
-
     //constructor is the function that is called upon initialization
     constructor(startX, startY, movementSpeed, rotationSpeed) {
         this.pos = createVector(); //create an object with vector properties, see more below
         this.pos.x = startX;
         this.pos.y = startY;
 
-        this.futurePos = this.pos;
-
         this.dir = createVector(); //create an object with vector properties, see more below
         this.dir.x = 0;
-        this.dir.y = 1;
+        this.dir.y = -10;
 
         this.moveSpeed = movementSpeed;
         this.rotSpeed = rotationSpeed;
@@ -32,8 +29,11 @@ class Player {
         */
 
         this.collisionSize = 10; //will be used to make sure collisions won't happen;
+        this.collided = false;
 
-    }
+        this.collisionRay = new Ray(this.pos.x, this.pos.y, this.dir.x, this.dir.y)
+
+    }   
 
     getRotation() { //returns an angle
         return (round(atan2(this.dir.y, this.dir.x)));
@@ -51,17 +51,8 @@ class Player {
         var xprime = this.pos.x + cos(this.getRotation()) * amount; //I use the values xprime and yprime to figure out how to move the player before actually moving
         var yprime = this.pos.y + sin(this.getRotation()) * amount; //Once you have these values, you can check for collision by putting using line-line collision later on [not implemented]
 
-        this.futurePos.x = (xprime);
-        this.futurePos.y = (yprime);
-    }
-
-    strafe(xdir, amount) { //side to side movement of the player seen in the original DOOM
-
-        //uses a nifty trick of just rotating left or right and then moves forward and rotates back 
-
-        this.setRotation(this.getRotation() + 90);
-        this.move(amount * xdir) // if xdir is 1, moves rotates left and then moves forward, if -1, moves backward. All of this happens before rotating back. If xdir is 0, no movement
-        this.setRotation(this.getRotation() - 90);
+        this.pos.x = (xprime);
+        this.pos.y = (yprime);
     }
 
     update() {
@@ -71,54 +62,120 @@ class Player {
         using local variables mean you don't nead the 'this.' in every single time you use it, but you cant use it everywhere
         In order to create a global varibal, use the constructor function
         */
-        var forwardDir = keyDown('w') - keyDown('s'); //returns 1 (forward), 0 ( both keys are pressed, no movement) or -1 (move backwards)
-        var rotDir = keyDown('d') - keyDown('a'); //returns 1, 0, or -1 but for left, no rotation, or right respectively
 
-        var strafe = keyDown('right') - keyDown('left'); //ill use this to move left and right based on rotation
+        var moveForward = keyDown('w');
+        var moveOther = (keyDown('a') || keyDown('s') || keyDown('d') || keyDown('a') || keyDown('d') || keyDown('s'))
 
-        this.move(forwardDir * this.moveSpeed);
-        this.strafe(strafe, this.moveSpeed);
-        this.setRotation(this.getRotation() + rotDir * this.rotSpeed);
+        if(keyDown('left'))this.setRotation(this.getRotation() - this.rotSpeed)
+        if(keyDown('right'))this.setRotation(this.getRotation() + this.rotSpeed);
 
+        // var xinput = keyDown('d') - keyDown('a');
+        // var yinput = keyDown('w') - keyDown('s');
+
+        // this.collisionRay.dir = this.dir;
+        // this.move(this.moveSpeed * !this.collided * yinput);
+        
+        //this bit will make sure that the direction changes only once per frame. I need this to work so I only need to check the ray one per frame BEFORE MOVING.
+        //I do this by changing direction only if the key changes
+        
+        if(keyWentDown('d')){
+            this.setRotation(this.getRotation() + 90)
+        }
+
+        if(keyWentUp('d')){
+            this.setRotation(this.getRotation() - 90)
+        }
+
+        if(keyWentDown('a')){
+            this.setRotation(this.getRotation() - 90)
+        }
+
+        if(keyWentUp('a')){
+            this.setRotation(this.getRotation() + 90)
+        }
+
+        if(keyWentDown('s')){
+            this.setRotation(this.getRotation() - 180);
+            
+        }
+
+        if(keyWentUp('s')){
+            this.setRotation(this.getRotation() - 180);
+            
+        }
+
+        //this.strafe(strafe, this.moveSpeed);
+        
+        //this.setRotation(this.getRotation() + rotDir * this.rotSpeed);
+        this.move((moveForward || moveOther) * this.moveSpeed * !this.collided);
+        this.collisionRay.pos = this.pos;
+        this.collisionRay.dir = this.dir;
     }
 
     show() {
         //draw a line for the player
         stroke(255);
         line(this.pos.x, this.pos.y, this.pos.x + this.dir.x, this.pos.y + this.dir.y);
+        stroke('red')
+        fill(255);
+        ellipse(this.pos.x + this.dir.x, this.pos.y + this.dir.y, 8);
+        this.collisionRay.show();
+    }
+
+    checkCollision(walls) {
+
+        var closest = this.collisionRay.castAll(walls, true);
+        if(closest && closest.collided == true){
+            this.collided = true;
+        }else{
+            this.collided = false;
+        }
+    }
+
+    updateCollisionRay(){
 
     }
 
-    checkCollision(lines) {
+    drawRays(fov, rayCount, walls){
+        var output = [];
 
-        var collided = false; // so far has no collided
+        
+        if(keyDown('a') || keyWentDown('a'))this.setRotation(this.getRotation() + 90);
+        if(keyDown('d') || keyWentDown('d') )this.setRotation(this.getRotation() - 90);
+        if(keyDown('s') || keyWentDown('s'))this.setRotation(this.getRotation() + 180);
 
-        for (var l of lines) {
-            var x1 = this.pos.x;
-            var y1 = this.pos.y;
-            var x2 = this.futurePos.x;
-            var y2 = this.futurePos.y;
-            var x3 = l.a.x;
-            var y3 = l.a.y;
-            var x4 = l.b.x;
-            var y4 = l.b.y;
+        var dir = this.getRotation();
+        var increment = fov/rayCount;
+        this.setRotation(dir-fov/2);
+        for(var a = dir-fov/2; a < dir+fov/2; a+=increment){
+            this.setRotation(a)
 
-            var den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-
-            if (den == 0) continue; // if denominator is 0, lines are parallel and cannot collide, so skip to the next one
-
-            var t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
-            var u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
-
-            if (t > 0 && t < 1 && u > 0) {
-                collided = true;
-                break;
+            var outputData = {
+                exists: false,
+                wall: null,
+                dist: null,
+                ray: null,
+                pt: null,
+                angle: null
             }
 
+            var ray = new Ray(this.pos.x, this.pos.y, this.dir.x, this.dir.y)
+            var pt = ray.castAll(walls);
+            if(pt){
+                outputData.wall = pt.wall;
+                outputData.dist = abs(dist(pt.x, pt.y, this.pos.x, this.pos.y));
+                outputData.ray = ray;
+                outputData.pt = pt;
+                outputData.angle = a;
+                outputData.exists = true
+            }
+            output.push(outputData);
         }
-
-        //if(collided)this.pos = this.futurePos;
-
+        this.setRotation(dir);
+        if(keyDown('a') ||keyWentDown('a') )this.setRotation(this.getRotation() - 90);
+        if(keyDown('d') ||keyWentDown('d'))this.setRotation(this.getRotation() + 90);
+        if(keyDown('s') ||keyWentDown('s'))this.setRotation(this.getRotation() + 180);
+        return(output);
     }
 
 }
