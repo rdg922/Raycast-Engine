@@ -1,6 +1,6 @@
 class Player {
     //constructor is the function that is called upon initialization
-    constructor(startX, startY, movementSpeed, rotationSpeed) {
+    constructor(startX, startY, movementSpeed, rotationSpeed, keys) {
         this.pos = createVector(); //create an object with vector properties, see more below
         this.pos.x = startX;
         this.pos.y = startY;
@@ -32,6 +32,17 @@ class Player {
         this.collided = false;
 
         this.collisionRay = new Ray(this.pos.x, this.pos.y, this.dir.x, this.dir.y)
+
+        //player input
+        this.input = {
+            left: 'a',
+            right: 'd',
+            up: 'w',
+            down: 's',
+            lookLeft: 'left',
+            lookRight: 'right'
+
+        }
 
     }   
 
@@ -140,9 +151,9 @@ class Player {
         var output = [];
 
         
+        if(keyDown('s') || keyWentDown('s'))this.setRotation(this.getRotation() + 180);
         if(keyDown('a') || keyWentDown('a'))this.setRotation(this.getRotation() + 90);
         if(keyDown('d') || keyWentDown('d') )this.setRotation(this.getRotation() - 90);
-        if(keyDown('s') || keyWentDown('s'))this.setRotation(this.getRotation() + 180);
 
         var dir = this.getRotation();
         var increment = fov/rayCount;
@@ -151,12 +162,12 @@ class Player {
             this.setRotation(a)
 
             var outputData = {
-                exists: false,
+                //exists: false,
                 wall: null,
                 dist: null,
-                ray: null,
-                pt: null,
-                angle: null
+                //ray: null,
+                //pt: null,
+                //angle: null
             }
 
             var ray = new Ray(this.pos.x, this.pos.y, this.dir.x, this.dir.y)
@@ -164,17 +175,17 @@ class Player {
             if(pt){
                 outputData.wall = pt.wall;
                 outputData.dist = abs(dist(pt.x, pt.y, this.pos.x, this.pos.y));
-                outputData.ray = ray;
-                outputData.pt = pt;
-                outputData.angle = a;
-                outputData.exists = true
+                //outputData.ray = ray;
+                //outputData.pt = pt;
+                //outputData.angle = a;
+                //outputData.exists = true
             }
             output.push(outputData);
         }
         this.setRotation(dir);
+        if(keyDown('s') ||keyWentDown('s'))this.setRotation(this.getRotation() + 180);
         if(keyDown('a') ||keyWentDown('a') )this.setRotation(this.getRotation() - 90);
         if(keyDown('d') ||keyWentDown('d'))this.setRotation(this.getRotation() + 90);
-        if(keyDown('s') ||keyWentDown('s'))this.setRotation(this.getRotation() + 180);
         return(output);
     }
 

@@ -34,7 +34,7 @@ window.preload = function () {
 // -----
 
 //objects are always assigned variables so you can access it later on
-var player = new Player(200,200, 2, 2); // create new player object. normally the constructor is capitalized (I told you the wrong thing)
+var player = new Player(200,200, 2, 1); // create new player object. normally the constructor is capitalized (I told you the wrong thing)
 var gui = new Gui(0, 0, windowWidth, 100); // create Gui Bar at the very top with the origin on the box at the top left
 
 var test = new Walls();
@@ -49,14 +49,14 @@ createCanvas(windowWidth, windowHeight); //self explanatory
 
 //console.log(Player) // just check if the player is created and what its default attributes are
 World.frameRate = 60;
-
+colorMode(HSB);
 function draw(){
   background(0);
 
   player.checkCollision(test.walls);
   player.update() //handles keyboard input and whatnot
   player.collisionRay.castAll(test.get());
-  var output = player.drawRays(45, windowWidth, test.get())
+  var output = player.drawRays(45, windowWidth/2 + (windowWidth/2 * (frameRate>60)), test.get())
   drawRays(output, 0,0,windowWidth,windowHeight);
 
   
@@ -68,8 +68,8 @@ function draw(){
   gui.updateValue("Framerate", frameRate());
 
   //draw orders
-  //test.show() //draws a single line for each boundary
-  //player.show() // draws before the gui and after the lines (to show the direction on top of the boundaries)
+  test.show() //draws a single line for each boundary
+  player.show() // draws before the gui and after the lines (to show the direction on top of the boundaries)
   gui.show(); //draws Gui on top
   
 
@@ -77,25 +77,27 @@ function draw(){
 
 function drawRays(output, startx, starty, endx, endy){
   //console.log(output)
-  var con = []
   noStroke();
   for(var i = 0; i < output.length; i++){
     //console.log(i);
-    if (!output[i].exists) continue;
+    if (output[i].wall == null) continue;
 
     var height = windowHeight;
     var width = (endx - startx)/output.length;
 
-    var inDist = 10000/output[i].dist;
+    var inDist = 12000/output[i].dist;
     var top = height/2 + starty + inDist;
     var left = (width*i);
     var right = (width*(i+1))+1;
     var bottom = height/2 + starty - inDist; 
 
-    fill(inDist)
-    con.push(left, right, top, bottom);
+    // var col = output[i].wall.color;
+    // col[0] = col[0] - output[i].dist
+    fill([output[i].wall.color[0], output[i].wall.color[1], output[i].wall.color[2]  - output[i].dist/5 ] )
     shape(left, top, right, top, right, bottom, left, bottom);
    }
+
+   if(output[0].wall != null)console.log(output[0].wall.color[0]);
    //console.log((endx - startx)/output.length);
    //console.log(con);
 }
