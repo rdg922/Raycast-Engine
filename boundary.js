@@ -24,7 +24,8 @@ class Walls{
         this.walls = [];
     }
 
-    get(){
+    get(xPos, yPos){
+
         return this.walls;
     }
 

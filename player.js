@@ -5,9 +5,13 @@ class Player {
         this.pos.x = startX;
         this.pos.y = startY;
 
-        this.dir = createVector(); //create an object with vector properties, see more below
-        this.dir.x = 0;
-        this.dir.y = -10;
+        this.moveDir = createVector(); //create a vector for moving
+        this.moveDir.x = 0;
+        this.moveDir.y = -10;
+
+        this.lookDir = createVector();
+        this.lookDir.x = 0;
+        this.lookDir.y = -10;
 
         this.moveSpeed = movementSpeed;
         this.rotSpeed = rotationSpeed;
@@ -31,36 +35,54 @@ class Player {
         this.collisionSize = 10; //will be used to make sure collisions won't happen;
         this.collided = false;
 
-        this.collisionRay = new Ray(this.pos.x, this.pos.y, this.dir.x, this.dir.y)
+        this.collisionRay = new Ray(this.pos.x, this.pos.y, this.moveDir.x, this.moveDir.y)
 
         //player input
-        this.input = {
-            left: 'a',
-            right: 'd',
-            up: 'w',
-            down: 's',
+
+        this.input = { //default player inputs
+            moveLeft: 'a',
+            moveRight: 'd',
+            moveForward: 'w',
+            moveBackward: 's',
             lookLeft: 'left',
             lookRight: 'right'
+        };
 
+        if(keys)this.input = { //inputs are overwritten if there is no keys
+            moveLeft: keys.moveLeft,
+            moveRight: keys.moveRight,
+            moveForward: keys.moveForward,
+            moveBackward: keys.moveBackward,
+            lookLeft: keys.lookLeft,
+            lookRight: keys.lookRight
         }
 
     }   
 
-    getRotation() { //returns an angle
-        return (round(atan2(this.dir.y, this.dir.x)));
+    getLookRotation() { //returns an angle
+        return (round(atan2(this.lookDir.y, this.lookDir.x)));
     };
 
-    setRotation(angle) { // sets the direction based on an angle
-        this.dir.x = cos(angle) * this.collisionSize;
-        this.dir.y = sin(angle) * this.collisionSize;
+    setLookRotation(angle) { // sets the direction based on an angle
+        this.lookDir.x = cos(angle) * this.collisionSize;
+        this.lookDir.y = sin(angle) * this.collisionSize;
+    }
+
+    getMoveRotation() { //returns an angle
+        return (round(atan2(this.moveDir.y, this.moveDir.x)));
+    };
+
+    setMoveRotation(angle) { // sets the direction based on an angle
+        this.moveDir.x = cos(angle) * this.collisionSize;
+        this.moveDir.y = sin(angle) * this.collisionSize;
     }
 
 
     move(amount) {
         //notice how this is similar to setting the rotation?
 
-        var xprime = this.pos.x + cos(this.getRotation()) * amount; //I use the values xprime and yprime to figure out how to move the player before actually moving
-        var yprime = this.pos.y + sin(this.getRotation()) * amount; //Once you have these values, you can check for collision by putting using line-line collision later on [not implemented]
+        var xprime = this.pos.x + cos(this.getMoveRotation()) * amount; //I use the values xprime and yprime to figure out how to move the player before actually moving
+        var yprime = this.pos.y + sin(this.getMoveRotation()) * amount; //Once you have these values, you can check for collision by putting using line-line collision later on [not implemented]
 
         this.pos.x = (xprime);
         this.pos.y = (yprime);
@@ -75,66 +97,45 @@ class Player {
         */
 
         var moveForward = keyDown('w');
-        var moveOther = (keyDown('a') || keyDown('s') || keyDown('d') || keyDown('a') || keyDown('d') || keyDown('s'))
 
-        if(keyDown('left'))this.setRotation(this.getRotation() - this.rotSpeed)
-        if(keyDown('right'))this.setRotation(this.getRotation() + this.rotSpeed);
+        //look direction directly is changed by the left and arrow keys
+        if(keyDown(this.input.lookLeft))this.setLookRotation(this.getLookRotation() - this.rotSpeed)
+        if(keyDown(this.input.lookRight))this.setLookRotation(this.getLookRotation() + this.rotSpeed);
 
-        // var xinput = keyDown('d') - keyDown('a');
-        // var yinput = keyDown('w') - keyDown('s');
+        var xinput = keyDown(this.input.moveRight) - keyDown(this.input.moveLeft);
+        var yinput = keyDown(this.input.moveForward) - keyDown(this.input.moveBackward);
 
-        // this.collisionRay.dir = this.dir;
-        // this.move(this.moveSpeed * !this.collided * yinput);
         
-        //this bit will make sure that the direction changes only once per frame. I need this to work so I only need to check the ray one per frame BEFORE MOVING.
-        //I do this by changing direction only if the key changes
         
-        if(keyWentDown('d')){
-            this.setRotation(this.getRotation() + 90)
-        }
+        //I need this to work so I only need to check the ray ONCE per frame BEFORE MOVING.
+        //I do this by changing the move direction based on the look direction
+        this.setMoveRotation( this.getLookRotation() );
+        if(xinput && !yinput)this.setMoveRotation(this.getLookRotation() + 90 * xinput);
+        else if(xinput && yinput != 1) this.setMoveRotation(this.getLookRotation() + 180 + 45 * -xinput);
+        else if(yinput == -1)this.setMoveRotation(this.getLookRotation() + 180);
+        else if(xinput && yinput == 1 ) this.setMoveRotation( this.getLookRotation() + 45 * xinput);
 
-        if(keyWentUp('d')){
-            this.setRotation(this.getRotation() - 90)
-        }
 
-        if(keyWentDown('a')){
-            this.setRotation(this.getRotation() - 90)
-        }
+        var will_move = abs(xinput || yinput)
 
-        if(keyWentUp('a')){
-            this.setRotation(this.getRotation() + 90)
-        }
-
-        if(keyWentDown('s')){
-            this.setRotation(this.getRotation() - 180);
-            
-        }
-
-        if(keyWentUp('s')){
-            this.setRotation(this.getRotation() - 180);
-            
-        }
-
-        //this.strafe(strafe, this.moveSpeed);
-        
-        //this.setRotation(this.getRotation() + rotDir * this.rotSpeed);
-        this.move((moveForward || moveOther) * this.moveSpeed * !this.collided);
+        this.move(will_move * this.moveSpeed * !this.collided);
         this.collisionRay.pos = this.pos;
-        this.collisionRay.dir = this.dir;
+        this.collisionRay.moveDir = this.lookDir;
     }
 
     show() {
         //draw a line for the player
         stroke(255);
-        line(this.pos.x, this.pos.y, this.pos.x + this.dir.x, this.pos.y + this.dir.y);
+        line(this.pos.x, this.pos.y, this.pos.x + this.lookDir.x, this.pos.y + this.lookDir.y);
         stroke('red')
         fill(255);
-        ellipse(this.pos.x + this.dir.x, this.pos.y + this.dir.y, 8);
+        ellipse(this.pos.x + this.lookDir.x, this.pos.y + this.lookDir.y, 8);
+        line(this.pos.x, this.pos.y, this.pos.x + this.moveDir.x, this.pos.y + this.moveDir.y)
         this.collisionRay.show();
     }
 
     checkCollision(walls) {
-
+        this.collisionRay.dir = this.moveDir;
         var closest = this.collisionRay.castAll(walls, true);
         if(closest && closest.collided == true){
             this.collided = true;
@@ -150,16 +151,11 @@ class Player {
     drawRays(fov, rayCount, walls){
         var output = [];
 
-        
-        if(keyDown('s') || keyWentDown('s'))this.setRotation(this.getRotation() + 180);
-        if(keyDown('a') || keyWentDown('a'))this.setRotation(this.getRotation() + 90);
-        if(keyDown('d') || keyWentDown('d') )this.setRotation(this.getRotation() - 90);
-
-        var dir = this.getRotation();
+        var dir = this.getLookRotation();
         var increment = fov/rayCount;
-        this.setRotation(dir-fov/2);
+        this.setLookRotation(dir-fov/2);
         for(var a = dir-fov/2; a < dir+fov/2; a+=increment){
-            this.setRotation(a)
+            this.setLookRotation(a)
 
             var outputData = {
                 //exists: false,
@@ -170,7 +166,7 @@ class Player {
                 //angle: null
             }
 
-            var ray = new Ray(this.pos.x, this.pos.y, this.dir.x, this.dir.y)
+            var ray = new Ray(this.pos.x, this.pos.y, this.lookDir.x, this.lookDir.y)
             var pt = ray.castAll(walls);
             if(pt){
                 outputData.wall = pt.wall;
@@ -182,10 +178,7 @@ class Player {
             }
             output.push(outputData);
         }
-        this.setRotation(dir);
-        if(keyDown('s') ||keyWentDown('s'))this.setRotation(this.getRotation() + 180);
-        if(keyDown('a') ||keyWentDown('a') )this.setRotation(this.getRotation() - 90);
-        if(keyDown('d') ||keyWentDown('d'))this.setRotation(this.getRotation() + 90);
+        this.setLookRotation(dir);
         return(output);
     }
 
