@@ -129,7 +129,7 @@ class Player {
         line(this.pos.x, this.pos.y, this.pos.x + this.lookDir.x, this.pos.y + this.lookDir.y);
         stroke('red')
         fill(255);
-        ellipse(this.pos.x + this.lookDir.x, this.pos.y + this.lookDir.y, 8);
+        ellipse(this.pos.x, this.pos.y, 8);
         line(this.pos.x, this.pos.y, this.pos.x + this.moveDir.x, this.pos.y + this.moveDir.y)
         this.collisionRay.show();
     }
@@ -144,11 +144,7 @@ class Player {
         }
     }
 
-    updateCollisionRay(){
-
-    }
-
-    drawRays(fov, rayCount, walls){
+    castRays(fov, rayCount, walls){
         var output = [];
 
         var dir = this.getLookRotation();
