@@ -35,4 +35,12 @@ class Walls{
         }
     }
 
+    delete(deletedWall){
+        this.get().filter(function(wall, index, arr){
+
+            return wall != deletedWall;
+        
+        });
+    }
+
 }

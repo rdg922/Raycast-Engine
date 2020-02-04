@@ -56,7 +56,7 @@ var p2inputs = {
 }
 
 
-var player = new Player(windowWidth/2,windowHeight/2, 1, 1, p1inputs); // create new player object. normally the constructor is capitalized (I told you the wrong thing)
+var player = new Player(windowWidth/2, windowHeight/2, 1, 1, p1inputs); // create new player object. normally the constructor is capitalized (I told you the wrong thing)
 var gui = new Gui(0, 0, windowWidth, 100); // create Gui Bar at the very top with the origin on the box at the top left
 
 
@@ -79,12 +79,12 @@ function draw(){
   player.checkCollision(test.walls);
   player.update() //handles keyboard input and whatnot
   player.collisionRay.castAll(test.get());
-  var output = player.castRays(45, windowWidth/2, test.get())
+  var output = player.castRays(45, windowWidth/4, test.get())
   
   player2.checkCollision(test.walls);
   player2.update() //handles keyboard input and whatnot
   player2.collisionRay.castAll(test.get());
-  var output2 = player2.castRays(45, windowWidth/2, test.get())
+  var output2 = player2.castRays(45, windowWidth/4, test.get())
   
 
   //gui always happens at the end
@@ -99,8 +99,8 @@ function draw(){
   drawRays(output2, windowWidth/2, 0, windowWidth ,windowHeight);
   stroke(255);
   line(windowWidth/2,0,windowWidth/2,windowHeight);
-  player.show() // draws before the gui and after the lines (to show the direction on top of the boundaries)
-  player2.show();
+  //player.show() // draws before the gui and after the lines (to show the direction on top of the boundaries)
+  //player2.show();
   gui.show(); //draws Gui on top
   
 
@@ -117,7 +117,7 @@ function drawRays(output, startx, starty, endx, endy){
     var inDist = 12000/output[i].dist;
     var top = height/2 + starty + inDist;
     var left = (width*i) + startx;
-    var right = (width*(i+1))+1 + startx;
+    var right = (width*(i+1)) + startx;
     var bottom = height/2 + starty - inDist; 
 
 
